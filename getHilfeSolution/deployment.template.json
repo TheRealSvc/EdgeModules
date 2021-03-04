@@ -1,0 +1,83 @@
+{
+  "modulesContent": {
+      "$edgeAgent": {
+          "properties.desired": {
+              "modules": {
+                  "getHilfeModule": {
+                      "settings": {
+                          "image": "svcsolutionscontainerregistry.azurecr.io/gethilfemodule:0.0.3-amd64",
+                          "createOptions": ""
+                      },
+                      "type": "docker",
+                      "version": "1.0",
+                      "status": "running",
+                      "restartPolicy": "always"
+                  },
+                  "prepareSummaryModule": {
+                    "settings": {
+                        "image": "svcsolutionscontainerregistry.azurecr.io/preparesummarymodule:0.0.1-amd64",
+                        "createOptions": ""
+                    },
+                    "type": "docker",
+                    "version": "1.0",
+                    "status": "running",
+                    "restartPolicy": "always"
+                }
+              },
+              "runtime": {
+                  "settings": {
+                      "minDockerVersion": "v1.25",
+                      "registryCredentials": {
+                          "svcsolutionscontainerregistry": {
+                              "address": "svcsolutionscontainerregistry.azurecr.io",
+                              "password": "hAG27H/p0RhXX=JvmFBhzzdZMZxO9KT4",
+                              "username": "svcsolutionscontainerregistry"
+                          }
+                      }
+                  },
+                  "type": "docker"
+              },
+              "schemaVersion": "1.0",
+              "systemModules": {
+                  "edgeAgent": {
+                      "settings": {
+                          "image": "mcr.microsoft.com/azureiotedge-agent:1.1",
+                          "createOptions": "{}"
+                      },
+                      "type": "docker"
+                  },
+                  "edgeHub": {
+                      "settings": {
+                          "image": "mcr.microsoft.com/azureiotedge-hub:1.1",
+                          "createOptions": "{\"HostConfig\":{\"PortBindings\":{\"5671/tcp\":[{\"HostPort\":\"5671\"}],\"8883/tcp\":[{\"HostPort\":\"8883\"}],\"443/tcp\":[{\"HostPort\":\"443\"}]},\"Binds\":[\"/etc/iotedge/storage/:/iotedge/storage/\"]}}"
+                      },
+                      "type": "docker",
+                      "env": {
+                          "storageFolder": {
+                              "value": "/iotedge/storage/"
+                          }
+                      },
+                      "status": "running",
+                      "restartPolicy": "always"
+                  }
+              }
+          }
+      },
+      "$edgeHub": {
+          "properties.desired": {
+              "routes": {
+                  "InputToModule": "FROM /messages/* INTO BrokeredEndpoint(\"/modules/getHilfeModule/inputs/input1\")" , 
+                  "ModuleToCloud": "FROM /messages/modules/getHilfeModule/outputs/output1 INTO BrokeredEndpoint(\"/modules/prepareSummaryModule/inputs/input1\")" ,
+                  "SummaryToCloud": "FROM /messages/modules/prepareSummaryModule/outputs/output1  INTO $upstream"
+              },
+              "schemaVersion": "1.0",
+              "storeAndForwardConfiguration": {
+                  "timeToLiveSecs": 600
+              }
+          }
+      },
+      "getHilfeModule": {
+          "properties.desired": {}
+      }
+  }
+}
