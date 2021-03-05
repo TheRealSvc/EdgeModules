@@ -1,7 +1,6 @@
-# Copyright (c) Microsoft. All rights reserved.
-# Licensed under the MIT license. See LICENSE file in the project root for
-# full license information.
-
+# Copyright (c) Stephan von Cölln Solutions
+# This Edge-Device Module receices a message from the 
+# enddevice and stores some info in a database  
 import time
 import os
 import sys
@@ -9,12 +8,24 @@ import asyncio
 from six.moves import input
 import threading
 from azure.iot.device.aio import IoTHubModuleClient
+import psycopg2
+from datetime import datetime
+
+
 
 async def main():
     try:
         if not sys.version >= "3.5.3":
-            raise Exception( "The sample requires python 3.5.3+. Current version of Python: %s" % sys.version )
+            raise Exception( "The sample requires python 3.5.3+. Current version of Python: %s" % sys.version )    
         print ( "IoT Hub Client for Python" )
+        conn = psycopg2.connect(
+            host="localhost",
+            database="svcSolutionsDB",
+            user="stephan",
+            password="a1345"
+        )
+        cur = conn.cursor() 
+        insertDate = datetime.now() # the datetime to be inserted 
 
         # The client object is used to interact with your Azure IoT hub.
         module_client = IoTHubModuleClient.create_from_edge_environment()
@@ -26,6 +37,14 @@ async def main():
         async def input1_listener(module_client):
             while True:
                 input_message = await module_client.receive_message_on_input("input1")  # blocking call
+                message_content = input_message.data 
+                message_time = input_message.custom_properties["event_time"]
+                message_id = input_message.message_id 
+
+                cur.execute("INSERT INTO public.\"eventTable\" (event_id,event_message, event_date) VALUES (%s,%s,%s)", (message_id, message_content, message_time))  
+                conn.commit()
+                conn.close()
+
                 print("the data in the message received on input1 was ")
                 print(input_message.data)
                 print("custom properties are")
