@@ -5,21 +5,21 @@
               "modules": {
                   "getHilfeModule": {
                       "settings": {
-                          "image": "svcsolutionscontainerregistry.azurecr.io/gethilfemodule:0.0.3-amd64",
+                          "image": "svcsolutionscontainerregistry.azurecr.io/gethilfemodule:0.0.51-amd64",
                           "createOptions": ""
                       },
                       "type": "docker",
-                      "version": "1.0",
+                      "version": "1.1",
                       "status": "running",
                       "restartPolicy": "always"
                   },
                   "prepareSummaryModule": {
                     "settings": {
-                        "image": "svcsolutionscontainerregistry.azurecr.io/preparesummarymodule:0.0.1-amd64",
+                        "image": "svcsolutionscontainerregistry.azurecr.io/preparesummarymodule:0.0.2-amd64",
                         "createOptions": ""
                     },
                     "type": "docker",
-                    "version": "1.0",
+                    "version": "1.1",
                     "status": "running",
                     "restartPolicy": "always"
                 }
@@ -37,7 +37,7 @@
                   },
                   "type": "docker"
               },
-              "schemaVersion": "1.0",
+              "schemaVersion": "1.1",
               "systemModules": {
                   "edgeAgent": {
                       "settings": {
@@ -49,7 +49,7 @@
                   "edgeHub": {
                       "settings": {
                           "image": "mcr.microsoft.com/azureiotedge-hub:1.1",
-                          "createOptions": "{\"HostConfig\":{\"PortBindings\":{\"5671/tcp\":[{\"HostPort\":\"5671\"}],\"8883/tcp\":[{\"HostPort\":\"8883\"}],\"443/tcp\":[{\"HostPort\":\"443\"}]},\"Binds\":[\"/etc/iotedge/storage/:/iotedge/storage/\"]}}"
+                          "createOptions": "{\"HostConfig\":{\"PortBindings\":{\"5671/tcp\":[{\"HostPort\":\"5671\"}],\"8883/tcp\":[{\"HostPort\":\"8883\"}],\"5432/tcp\":[{\"HostPort\":\"5432\"}] ,\"443/tcp\":[{\"HostPort\":\"443\"}]},\"Binds\":[\"/etc/iotedge/storage/:/iotedge/storage/\"]}}"
                       },
                       "type": "docker",
                       "env": {
@@ -65,19 +65,23 @@
       },
       "$edgeHub": {
           "properties.desired": {
-              "routes": {
-                  "InputToModule": "FROM /messages/* INTO BrokeredEndpoint(\"/modules/getHilfeModule/inputs/input1\")" , 
-                  "ModuleToCloud": "FROM /messages/modules/getHilfeModule/outputs/output1 INTO BrokeredEndpoint(\"/modules/prepareSummaryModule/inputs/input1\")" ,
-                  "SummaryToCloud": "FROM /messages/modules/prepareSummaryModule/outputs/output1  INTO $upstream"
-              },
-              "schemaVersion": "1.0",
-              "storeAndForwardConfiguration": {
-                  "timeToLiveSecs": 600
-              }
+            "schemaVersion": "1.1",
+            "routes": {
+                "route1": {
+                  "route": "FROM /messages/* WHERE NOT IS_DEFINED($connectionModuleId) INTO BrokeredEndpoint(\"/modules/getHilfeModule/inputs/input1\")",
+                  "priority": 0,
+                  "timeToLiveSecs": 1800
+                },
+                "route2": {
+                  "route": "FROM /messages/modules/getHilfeModule/outputs/* INTO $upstream",
+                  "priority": 0,
+                  "timeToLiveSecs": 1800
+                }         
+            },
+            "storeAndForwardConfiguration": {
+              "timeToLiveSecs": 100
+            }
           }
-      },
-      "getHilfeModule": {
-          "properties.desired": {}
-      }
-  }
+        }
+    }
 }
