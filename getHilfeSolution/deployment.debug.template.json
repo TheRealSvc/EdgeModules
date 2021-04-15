@@ -89,6 +89,47 @@
               "image": "mcr.microsoft.com/azureiotedge-simulated-temperature-sensor:1.0",
               "createOptions": {}
             }
+          },
+          "EchoonIoTEdge": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "marketplace.azurecr.io/1604376875527/wedx-echo:latest",
+              "createOptions": {}
+            },
+            "env": {
+              "OUTPUT_CONSOLE": {
+                "value": "true"
+              },
+              "OUTPUT_UPSTREAM": {
+                "value": "true"
+              }
+            }
+          },
+          "sendWakeword": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "${MODULES.sendWakeword.debug}",
+              "createOptions": {
+                "ExposedPorts": {
+                  "5678/tcp": {}
+                },
+                "HostConfig": {
+                  "PortBindings": {
+                    "5678/tcp": [
+                      {
+                        "HostPort": "5678"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -98,11 +139,23 @@
         "schemaVersion": "1.0",
         "routes": {
           "getHilfeModuleToIoTHub": "FROM /messages/modules/getHilfeModule/outputs/* INTO $upstream",
-          "sensorTogetHilfeModule": "FROM /messages/modules/SimulatedTemperatureSensor/outputs/temperatureOutput INTO BrokeredEndpoint(\"/modules/getHilfeModule/inputs/input1\")"
+          "sensorTogetHilfeModule": "FROM /messages/modules/SimulatedTemperatureSensor/outputs/temperatureOutput INTO BrokeredEndpoint(\"/modules/getHilfeModule/inputs/input1\")",
+          "ToEchoonIoTEdge1": "FROM /messages/modules/<FROM_MODULE_NAME>/outputs/* INTO BrokeredEndpoint(\"/modules/EchoonIoTEdge/inputs/Input1\")",
+          "ToEchoonIoTEdge2": "FROM /messages/modules/<FROM_MODULE_NAME>/outputs/* INTO BrokeredEndpoint(\"/modules/EchoonIoTEdge/inputs/Input2\")",
+          "FromEchoonIoTEdge1": "FROM /messages/modules/EchoonIoTEdge/outputs/output1 INTO $upstream",
+          "FromEchoonIoTEdge2": "FROM /messages/modules/EchoonIoTEdge/outputs/output2 INTO $upstream",
+          "blobStorageModuleToIoTHub": "FROM /messages/modules/blobStorageModule/outputs/* INTO $upstream",
+          "sendWakewordToIoTHub": "FROM /messages/modules/sendWakeword/outputs/* INTO $upstream"
         },
         "storeAndForwardConfiguration": {
           "timeToLiveSecs": 7200
         }
+      }
+    },
+    "EchoonIoTEdge": {
+      "properties.desired": {
+        "OutputConsole": true,
+        "OutputUpstream": true
       }
     }
   }
