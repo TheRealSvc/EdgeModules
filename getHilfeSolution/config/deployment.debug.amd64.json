@@ -1,0 +1,104 @@
+{
+  "modulesContent": {
+    "$edgeAgent": {
+      "properties.desired": {
+        "schemaVersion": "1.0",
+        "runtime": {
+          "type": "docker",
+          "settings": {
+            "minDockerVersion": "v1.25",
+            "loggingOptions": "",
+            "registryCredentials": {
+              "svcsolutionscontainerregistry": {
+                "username": "$CONTAINER_REGISTRY_USERNAME_svcsolutionscontainerregistry",
+                "password": "$CONTAINER_REGISTRY_PASSWORD_svcsolutionscontainerregistry",
+                "address": "svcsolutionscontainerregistry.azurecr.io"
+              }
+            }
+          }
+        },
+        "systemModules": {
+          "edgeAgent": {
+            "type": "docker",
+            "settings": {
+              "image": "mcr.microsoft.com/azureiotedge-agent:1.0",
+              "createOptions": "{}"
+            }
+          },
+          "edgeHub": {
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "mcr.microsoft.com/azureiotedge-hub:1.0",
+              "createOptions": "{\"HostConfig\":{\"PortBindings\":{\"5671/tcp\":[{\"HostPort\":\"5671\"}],\"8883/tcp\":[{\"HostPort\":\"8883\"}],\"443/tcp\":[{\"HostPort\":\"443\"}]}}}"
+            }
+          }
+        },
+        "modules": {
+          "getHilfeModule": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "svcsolutionscontainerregistry.azurecr.io/gethilfemodule:0.0.66-amd64.debug",
+              "createOptions": "{\"ExposedPorts\":{\"5678/tcp\":{}},\"HostConfig\":{\"PortBindings\":{\"5678/tcp\":[{\"HostPort\":\"5678\"}]}}}"
+            }
+          },
+          "SimulatedTemperatureSensor": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "mcr.microsoft.com/azureiotedge-simulated-temperature-sensor:1.0",
+              "createOptions": "{}"
+            }
+          },
+          "EchoonIoTEdge": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "marketplace.azurecr.io/1604376875527/wedx-echo:latest",
+              "createOptions": "{}"
+            },
+            "env": {
+              "OUTPUT_CONSOLE": {
+                "value": "true"
+              },
+              "OUTPUT_UPSTREAM": {
+                "value": "true"
+              }
+            }
+          }
+        }
+      }
+    },
+    "$edgeHub": {
+      "properties.desired": {
+        "schemaVersion": "1.0",
+        "routes": {
+          "getHilfeModuleToIoTHub": "FROM /messages/modules/getHilfeModule/outputs/* INTO $upstream",
+          "sensorTogetHilfeModule": "FROM /messages/modules/SimulatedTemperatureSensor/outputs/temperatureOutput INTO BrokeredEndpoint(\"/modules/getHilfeModule/inputs/input1\")",
+          "ToEchoonIoTEdge1": "FROM /messages/modules/<FROM_MODULE_NAME>/outputs/* INTO BrokeredEndpoint(\"/modules/EchoonIoTEdge/inputs/Input1\")",
+          "ToEchoonIoTEdge2": "FROM /messages/modules/<FROM_MODULE_NAME>/outputs/* INTO BrokeredEndpoint(\"/modules/EchoonIoTEdge/inputs/Input2\")",
+          "FromEchoonIoTEdge1": "FROM /messages/modules/EchoonIoTEdge/outputs/output1 INTO $upstream",
+          "FromEchoonIoTEdge2": "FROM /messages/modules/EchoonIoTEdge/outputs/output2 INTO $upstream",
+          "blobStorageModuleToIoTHub": "FROM /messages/modules/blobStorageModule/outputs/* INTO $upstream"
+        },
+        "storeAndForwardConfiguration": {
+          "timeToLiveSecs": 7200
+        }
+      }
+    },
+    "EchoonIoTEdge": {
+      "properties.desired": {
+        "OutputConsole": true,
+        "OutputUpstream": true
+      }
+    }
+  }
+}

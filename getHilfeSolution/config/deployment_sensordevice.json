@@ -1,0 +1,97 @@
+{
+    "modulesContent": {
+        "$edgeAgent": {
+            "properties.desired": {
+                "modules": {
+                    "SimulatedTemperatureSensor": {
+                        "settings": {
+                            "image": "$upstream:8000/azureiotedge-simulated-temperature-sensor:1.0",
+                            "createOptions": ""
+                        },
+                        "type": "docker",
+                        "version": "1.0",
+                        "env": {
+                            "MessageCount": {
+                                "value": "600"
+                            }
+                        },
+                        "status": "running",
+                        "restartPolicy": "always"
+                    },
+                    "sendwakeword": {
+                        "settings": {
+                            "image": "$upstream:8000/sendwakeword:0.2.7-armv7l",
+                            "createOptions": "{\"HostConfig\":{\"Devices\":[{\"PathOnHost\":\"/dev/snd\",\"PathInContainer\":\"/dev/snd\",\"CgroupPermissions\":\"mrw\"}]}}"
+                        },
+                        "type": "docker",
+                        "version": "1.0",
+                        "imagePullPolicy": "on-create",
+                        "status": "running",
+                        "restartPolicy": "always"
+                    }
+                },
+                "runtime": {
+                    "settings": {
+                        "minDockerVersion": "v1.25"
+                    },
+                    "type": "docker"
+                },
+                "schemaVersion": "1.1",
+                "systemModules": {
+                    "edgeAgent": {
+                        "settings": {
+                            "image": "$upstream:8000/azureiotedge-agent:1.2.0-rc4",
+                            "createOptions": ""
+                        },
+                        "type": "docker",
+                        "env": {
+                            "experimentalFeatures__enabled": {
+                                "value": "true"
+                            },
+                            "experimentalFeatures__nestedEdgeEnabled": {
+                                "value": "true"
+                            }
+                        }
+                    },
+                    "edgeHub": {
+                        "settings": {
+                            "image": "$upstream:8000/azureiotedge-hub:1.2.1",
+                            "createOptions": "{\"HostConfig\":{\"PortBindings\":{\"5671/tcp\":[{\"HostPort\":\"5671\"}],\"8883/tcp\":[{\"HostPort\":\"8883\"}]}}}"
+                        },
+                        "type": "docker",
+                        "env": {
+                            "experimentalFeatures__enabled": {
+                                "value": "true"
+                            },
+                            "experimentalFeatures__nestedEdgeEnabled": {
+                                "value": "true"
+                            }
+                        },
+                        "status": "running",
+                        "restartPolicy": "always"
+                    }
+                }
+            }
+        },
+        "$edgeHub": {
+            "properties.desired": {
+                "routes": {
+                    "sendwakewordToprepareSummaryModule": "FROM /messages/modules/sendwakeword/outputs/output1  INTO BrokeredEndpoint(\"/modules/getHilfeModule/inputs/input2\")"
+                },
+                "schemaVersion": "1.2",
+                "storeAndForwardConfiguration": {
+                    "timeToLiveSecs": 1200
+                }
+            }
+        },
+        "SimulatedTemperatureSensor": {
+            "properties.desired": {
+                "SendData": true,
+                "SendInterval": 250
+            }
+        },
+        "sendwakeword": {
+            "properties.desired": {}
+        }
+    }
+}

@@ -1,3 +1,2 @@
-config/
 .env
 modules/sendWakeword/savedModels/
