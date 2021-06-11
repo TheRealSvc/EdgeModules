@@ -34,24 +34,24 @@ async def main():
         #cur = conn.cursor() 
         #insertDate = datetime.now() # the datetime to be inserted
         # The client object is used to interact with your Azure IoT hub.
-        # module_client = IoTHubModuleClient.create_from_connection_string('HostName=testhub321.azure-devices.net;DeviceId=maindevice;SharedAccessKey=H+27aF7QAmHVpJyx0mV+LW1x5CkmTCk7pltL/a+Pjfw=') 
-        module_client = IoTHubModuleClient.create_from_edge_environment()
+        module_client = IoTHubModuleClient.create_from_connection_string('HostName=testhub321.azure-devices.net;DeviceId=maindevice;SharedAccessKey=1Hl5MNfsC9JW+eBKdthoDx0aI5yIB7/f06Aj4JGuhJc=', websockets=True) 
+        #module_client = IoTHubModuleClient.create_from_edge_environment()
         print("hier 1")
         # connect the client.
-        await module_client.connect()
+        # await module_client.connect()
         print("hier 2")
 
         # Define behavior for receiving an input message on input1
         # NOTE: this could be a coroutine or a function
         def message_handler(message):
-            if message.input_name == "input2":
-                print("Message received on INPUT 2")
+            if message.input_name == "input1":
+                print("Message received on INPUT 1")
                 print("the data in the message received was ")
                 print(message.data)
                 print("custom properties are")
                 print(message.custom_properties)
-                module_client.send_message_to_output(message, "output2")  
-                print("forwarded message to modules outpu2")
+                module_client.send_message_to_output(message, "output1")  
+                print("forwarded message to modules output1")
             elif message.input_name == "input3":
                 print("Message received on INPUT 3")
                 print("the data in the message received was ")

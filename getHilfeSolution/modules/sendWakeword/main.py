@@ -1,75 +1,86 @@
-# Copyright (c) Microsoft. All rights reserved.
-# Licensed under the MIT license. See LICENSE file in the project root for
-# full license information.
-
-import time
-import os
-import sys
-import asyncio
-from six.moves import input
-import threading
+## create file with sample code
+import torch
+import pyaudio
+import numpy as np
 from azure.iot.device.aio import IoTHubModuleClient
+from azure.iot.device import Message
+import re
+import random
+from datetime import datetime
+import asyncio
+from utils import read_audiostream
 
-async def main():
+async def startWakewordService():
+    # The client object is used to interact with your Azure IoT Edge device.
+    module_client = IoTHubModuleClient.create_from_connection_string("HostName=testhub321.azure-devices.net;DeviceId=sensoredge;SharedAccessKey=YId4cq/nZP1CYLgIx0CK3gakA/fnlSftNpJl+/i5TNA=", websockets=True)
+    #module_client = IoTHubModuleClient.create_from_edge_environment() # only for testing the connections_string was used
+    #await module_client.connect()
+
+    # voice detection using onnx
+    onnx = True
+    # otherwise torch
+    if (onnx):
+        import onnx
+        import onnxruntime
+        onnx_model = onnx.load('./savedModels/model_de.onnx')
+        onnx.checker.check_model(onnx_model)
+        ort_session = onnxruntime.InferenceSession('./savedModels/model_de.onnx')
+        decoder = torch.load('./savedModels/decoder_de.pth')
+    else:
+        device = torch.device('cpu')  # gpu also works, but our models are fast enough for CPU
+        model = torch.jit.load('./savedModels/model_de.zip')
+        decoder = torch.load('./savedModels/decoder_de.pth')
+    #########################################################################
+    CHUNK = 96000  #40960 # number of data points to read at a time
+    RATE =  16000  #44100 # time resolution of the recording device (Hz)
+    WAKEWORDS = ['hilfe', 'hülfe','hilf','pfleger', 'notfall', 'sonne', 'test']
+
+    p = pyaudio.PyAudio() # start the PyAudio class
+    stream = p.open(format=pyaudio.paInt16, channels=1, rate=RATE, input=True, frames_per_buffer=CHUNK)  # uses default input device
+
     try:
-        if not sys.version >= "3.5.3":
-            raise Exception( "The sample requires python 3.5.3+. Current version of Python: %s" % sys.version )
-        print ( "IoT Hub Client for Python" )
+        while 1: #do it a few times just to see
+            data = torch.from_numpy(np.fromstring(stream.read(CHUNK),dtype=np.int16)).float()
+            data = torch.reshape(data, (1,CHUNK))
+            data = read_audiostream(data, RATE, 16000) # maybe not required ? 16000 Hz required as input !
 
-        # The client object is used to interact with your Azure IoT hub.
-        module_client = IoTHubModuleClient.create_from_edge_environment()
+            # noinspection PyPackageRequirements
+            if (not onnx):
+                output = model(data)
+            else:
+                output = data
 
-        # connect the client.
-        await module_client.connect()
+            for example in output:
+                if(not onnx):
+                    chunkoutput = decoder(example.cpu())
+                else:
+                    onnx_input = example.detach().cpu().numpy().reshape(1,-1)
+                    ort_inputs = {'input': onnx_input}
+                    ort_outs = ort_session.run(None, ort_inputs)
+                    chunkoutput = decoder(torch.Tensor(ort_outs[0])[0])
 
-        # define behavior for receiving an input message on input1
-        async def input1_listener(module_client):
-            while True:
-                input_message = await module_client.receive_message_on_input("input1")  # blocking call
-                print("the data in the message received on input1 was ")
-                print(input_message.data)
-                print("custom properties are")
-                print(input_message.custom_properties)
-                print("forwarding mesage to output1")
-                await module_client.send_message_to_output(input_message, "output1")
+                for wakeword in WAKEWORDS:
+                    if re.search(wakeword, chunkoutput):
+                        print('Wakeword erkannt: ' + wakeword + ' ... tue etwas !')
+                        # Connect the module client.
+                        print("Sending message...")
+                        msg = Message("Someone called " + wakeword) # thats the payload
+                        msg.message_id = str(random.randint(0,1000000))
+                        msg.module = 'sendwakeword'
+                        msg.custom_properties["event_time"] = str(datetime.now())
+                        msg.user_id="sensoredge" ;
+                        await module_client.send_message_to_output(msg, "output1")
+                        print("Message successfully sent!")
 
-        # define behavior for halting the application
-        def stdin_listener():
-            while True:
-                try:
-                    selection = input("Press Q to quit\n")
-                    if selection == "Q" or selection == "q":
-                        print("Quitting...")
-                        break
-                except:
-                    time.sleep(10)
 
-        # Schedule task for C2D Listener
-        listeners = asyncio.gather(input1_listener(module_client))
-
-        print ( "The sample is now waiting for messages. ")
-
-        # Run the stdin listener in the event loop
-        loop = asyncio.get_event_loop()
-        user_finished = loop.run_in_executor(None, stdin_listener)
-
-        # Wait for user to indicate they are done listening for messages
-        await user_finished
-
-        # Cancel listening
-        listeners.cancel()
-
-        # Finally, disconnect
+    except KeyboardInterrupt:
+        print("Process interupted by keyboard interaction")
+        msg = Message("Process interupted by keyboard interaction. Module should restart automatically") # thats the payload
+        msg.message_id = str(random.randint(0,1000000))
+        msg.custom_properties["event_time"] = str(datetime.now())
+        await module_client.send_message_to_output(msg, "output1")
+        p.terminate()
         await module_client.disconnect()
 
-    except Exception as e:
-        print ( "Unexpected error %s " % e )
-        raise
-
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
-    loop.close()
-
-    # If using Python 3.7 or above, you can use following code instead:
-    # asyncio.run(main())
+    asyncio.run(startWakewordService())

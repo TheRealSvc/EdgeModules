@@ -1,18 +1,12 @@
 {
-  "$schema-version": "0.0.1",
+  "$schema-version": "0.3.4",
   "description": "",
   "image": {
     "repository": "svcsolutionscontainerregistry.azurecr.io/sendwakeword",
     "tag": {
-      "version": "0.0.1",
+      "version": "0.3.4",
       "platforms": {
-        "armv7l": " "./Dockerfile.armv7l",
-        "amd64": "./Dockerfile.amd64",
-        "amd64.debug": "./Dockerfile.amd64.debug",
-        "arm32v7": "./Dockerfile.arm32v7",
-        "arm32v7.debug": "./Dockerfile.arm32v7.debug",
-        "arm64v8": "./Dockerfile.arm64v8",
-        "arm64v8.debug": "./Dockerfile.arm64v8.debug"
+        "armv7l": "./Dockerfile.armv7l"
       }
     },
     "buildOptions": [],
