@@ -143,14 +143,60 @@
                 "routes": {
                     "route1": {
                         "priority": 0,
-                        "route": "FROM /messages/modules/sendwakeword/*  INTO BrokeredEndpoint(\"/modules/getHilfeModule/inputs/input1\")",
+                        "route": "FROM /messages/modules/sendwakeword/*  INTO &upstream",
                         "timeToLiveSecs": 1800
                     }
                 },
                 "schemaVersion": "1.2",
                 "storeAndForwardConfiguration": {
-                    "timeToLiveSecs": 100
-                }
+                    "timeToLiveSecs": 600
+                },
+                "mqttBroker":{
+                    "authorizations":[
+                       {
+                          "identities": [
+                            "testhub321.azure-devices.net/sensoredge"
+                          ],
+                          "allow":[
+                             {
+                                "operations":[
+                                   "mqtt:connect"
+                                ]
+                             }
+                          ]
+                       },
+                       {
+                          "identities": [
+                             "testhub321.azure-devices.net/maindevice"
+                          ],
+                          "allow":[
+                             {
+                                "operations":[
+                                   "mqtt:subscribe"
+                                ],
+                                "resources":[
+                                   "test_topic"
+                                ]
+                             }
+                          ]
+                       },
+                       {
+                          "identities": [
+                             "testhub321.azure-devices.net/sensoredge"
+                          ],
+                          "allow":[
+                             {
+                                "operations":[
+                                   "mqtt:publish"
+                                ],
+                                "resources":[
+                                   "test_topic"
+                                ]
+                             }
+                          ]
+                       }
+                    ]
+                 }
             }
         },
         "getHilfeModule": {
