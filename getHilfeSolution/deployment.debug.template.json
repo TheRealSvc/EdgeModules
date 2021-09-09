@@ -130,6 +130,75 @@
                 }
               }
             }
+          },
+          "sendMQTTmessage": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "${MODULES.sendMQTTmessage.debug}",
+              "createOptions": {
+                "ExposedPorts": {
+                  "5678/tcp": {}
+                },
+                "HostConfig": {
+                  "PortBindings": {
+                    "5678/tcp": [
+                      {
+                        "HostPort": "5678"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "ingestintodb": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "${MODULES.ingestintodb.debug}",
+              "createOptions": {
+                "ExposedPorts": {
+                  "5678/tcp": {}
+                },
+                "HostConfig": {
+                  "PortBindings": {
+                    "5678/tcp": [
+                      {
+                        "HostPort": "5678"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "sendfacedetection": {
+            "version": "1.0",
+            "type": "docker",
+            "status": "running",
+            "restartPolicy": "always",
+            "settings": {
+              "image": "${MODULES.sendfacedetection.debug}",
+              "createOptions": {
+                "ExposedPorts": {
+                  "5678/tcp": {}
+                },
+                "HostConfig": {
+                  "PortBindings": {
+                    "5678/tcp": [
+                      {
+                        "HostPort": "5678"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -145,7 +214,10 @@
           "FromEchoonIoTEdge1": "FROM /messages/modules/EchoonIoTEdge/outputs/output1 INTO $upstream",
           "FromEchoonIoTEdge2": "FROM /messages/modules/EchoonIoTEdge/outputs/output2 INTO $upstream",
           "blobStorageModuleToIoTHub": "FROM /messages/modules/blobStorageModule/outputs/* INTO $upstream",
-          "sendWakewordToIoTHub": "FROM /messages/modules/sendWakeword/outputs/* INTO $upstream"
+          "sendWakewordToIoTHub": "FROM /messages/modules/sendWakeword/outputs/* INTO $upstream",
+          "sendMQTTmessageToIoTHub": "FROM /messages/modules/sendMQTTmessage/outputs/* INTO $upstream",
+          "ingestintodbToIoTHub": "FROM /messages/modules/ingestintodb/outputs/* INTO $upstream",
+          "sendfacedetectionToIoTHub": "FROM /messages/modules/sendfacedetection/outputs/* INTO $upstream"
         },
         "storeAndForwardConfiguration": {
           "timeToLiveSecs": 7200

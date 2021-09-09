@@ -1,0 +1,15 @@
+FROM arm32v7/python:3.7-slim-buster
+
+WORKDIR /app
+
+COPY requirements.txt ./
+RUN pip install -r requirements.txt
+RUN mkdir -p /app/certs 
+RUN apt-get update && apt install nano \
+&& apt install openssl \
+&& apt install ca-certificates
+
+
+COPY . .
+
+CMD [ "python3", "-u", "./main.py" ]

@@ -1,0 +1,7 @@
+azure-iot-device~=2.7.0
+datetime
+backports.zoneinfo
+mqtt
+paho-mqtt
+SQLAlchemy
+psycopg2-binary

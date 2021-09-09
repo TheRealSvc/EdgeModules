@@ -1,0 +1,187 @@
+{
+    "modulesContent": {
+        "$edgeAgent": {
+            "properties.desired": {
+                "modules": {
+                    "ingestintodb": {
+                        "settings": {
+                            "image": "svcsolutionscontainerregistry.azurecr.io/ingestintodb:0.0.51-amd64"
+                        },
+                        "type": "docker",
+                        "version": "1.0",
+                        "env": {
+                            "MaxRestartCount": {
+                                "value": "100"
+                            }},
+                        "imagePullPolicy": "on-create",
+                        "status": "running",
+                        "restartPolicy": "always"
+                    },
+                    "IoTEdgeAPIProxy": {
+                        "settings": {
+                            "image": "svcsolutionscontainerregistry.azurecr.io/azureiotedge-api-proxy",
+                            "createOptions": "{\"HostConfig\":{\"PortBindings\":{\"8000/tcp\":[{\"HostPort\":\"8000\"}]}}}"
+                        },
+                        "type": "docker",
+                        "version": "1.0",
+                        "env": {
+                            "NGINX_DEFAULT_PORT": {
+                                "value": "8000"
+                            },
+                            "DOCKER_REQUEST_ROUTE_ADDRESS": {
+                                "value": "registry:5000"
+                            },
+                            "BLOB_UPLOAD_ROUTE_ADDRESS": {
+                                "value": "AzureBlobStorageonIoTEdge:11002"
+                            }
+                        },
+                        "imagePullPolicy": "on-create",
+                        "status": "running",
+                        "restartPolicy": "always"
+                    },
+                    "registry": {
+                        "settings": {
+                            "image": "svcsolutionscontainerregistry.azurecr.io/registry:latest",
+                            "createOptions": "{\"HostConfig\":{\"PortBindings\":{\"5000/tcp\":[{\"HostPort\":\"5000\"}],\"443/tcp\":[{\"HostPort\":\"443\"}],\"8000/tcp\":[{\"HostPort\":\"8000\"}]}}}"
+                        },
+                        "type": "docker",
+                        "version": "1.0",
+                        "env": {
+                            "REGISTRY_PROXY_REMOTEURL": {
+                                "value": "https://svcsolutionscontainerregistry.azurecr.io"
+                            },
+                            "REGISTRY_PROXY_PASSWORD": {
+                                "value": "0tc=0FRFdk3xNfoyzvRpkpaId2Jv7qNi"
+                            },
+                            "REGISTRY_PROXY_USERNAME": {
+                                "value": "svcsolutionscontainerregistry"
+                            }
+                        },
+                        "imagePullPolicy": "on-create",
+                        "status": "running",
+                        "restartPolicy": "always"
+                    }
+                },
+                "runtime": {
+                    "settings": {
+                        "minDockerVersion": "v1.25",
+                        "registryCredentials": {
+                            "svcsolutionscontainerregistry": {
+                                "address": "svcsolutionscontainerregistry.azurecr.io",
+                                "password": "0tc=0FRFdk3xNfoyzvRpkpaId2Jv7qNi",
+                                "username": "svcsolutionscontainerregistry"
+                            }
+                        }
+                    }, 
+                    "type": "docker"
+                },
+                "schemaVersion": "1.1",
+                "systemModules": {
+                    "edgeAgent": {
+                        "settings": {
+                            "image": "svcsolutionscontainerregistry.azurecr.io/azureiotedge-agent:1.2.1",
+                            "createOptions": "{}"
+                        },
+                        "type": "docker",
+                        "env": {
+                            "experimentalFeatures__enabled": {
+                                "value": true
+                            },
+                            "experimentalFeatures__mqttBrokerEnabled": {
+                                "value": true
+                            }
+                        },
+                        "imagePullPolicy": "on-create"
+                    },
+                    "edgeHub": {
+                        "settings": {
+                            "image": "svcsolutionscontainerregistry.azurecr.io/azureiotedge-hub:1.2.1",
+                            "createOptions": "{\"HostConfig\":{\"PortBindings\":{\"5671/tcp\":[{\"HostPort\":\"5671\"}],\"8883/tcp\":[{\"HostPort\":\"8883\"}],\"443/tcp\":[{\"HostPort\":\"443\"}]},\"Binds\":[\"/etc/iotedge/storage/:/iotedge/storage/\"]}}"
+                        },
+                        "type": "docker",
+                        "env": {
+                            "experimentalFeatures__enabled": {
+                                "value": true
+                            },
+                            "experimentalFeatures__nestedEdgeEnabled": {
+                                "value": true
+                            },
+                            "experimentalFeatures__mqttBrokerEnabled": {
+                                "value": false
+                            }
+                        },
+                        "imagePullPolicy": "on-create",
+                        "status": "running",
+                        "restartPolicy": "always"
+                    }
+                }
+            }
+        },
+        "$edgeHub": {
+            "properties.desired": {
+                "schemaVersion": "1.2",
+                "mqttBroker":{
+                    "authorizations":[
+                       {
+                          "identities": [
+                            "testhub321.azure-devices.net/sensoredge"
+                          ],
+                          "allow":[
+                             {
+                                "operations":[
+                                   "mqtt:connect"
+                                ]
+                             }
+                          ]
+                       },
+                       {
+                          "identities": [
+                             "testhub321.azure-devices.net/notebookedgehub"
+                          ],
+                          "allow":[
+                             {
+                                "operations":[
+                                   "mqtt:subscribe"
+                                ],
+                                "resources":[
+                                   "test_topic"
+                                ]
+                             }
+                          ]
+                       },
+                       {
+                          "identities": [
+                             "testhub321.azure-devices.net/sensoredge"
+                          ],
+                          "allow":[
+                             {
+                                "operations":[
+                                   "mqtt:publish"
+                                ],
+                                "resources":[
+                                   "test_topic"
+                                ]
+                             }
+                          ]
+                       }
+                    ]
+                 },
+                 "routes":{
+                    "Route1":"FROM /messages/* INTO $upstream"
+                 },
+                 "storeAndForwardConfiguration": {
+                    "timeToLiveSecs": 600
+                }        
+            }
+        },
+        "ingestintodb": {
+            "properties.desired": {"status": "running"}
+        },
+        "IoTEdgeAPIProxy": {
+            "properties.desired": {"status": "running"}
+        },
+        "registry": {
+            "properties.desired": {"status": "running"}
+        }
+    }
+}

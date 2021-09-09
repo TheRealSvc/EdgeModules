@@ -1,0 +1,8 @@
+azure-iot-device~=2.7.0
+paho-mqtt
+opencv_contrib_python_headless
+Pillow
+scipy
+pandas
+pathlib
+pyparsing

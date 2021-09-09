@@ -9,6 +9,14 @@ import random
 from datetime import datetime
 import asyncio
 from utils import read_audiostream
+import paho.mqtt.client as mqtt #import the client1
+import time 
+import paho.mqtt.publish as publish #import the client1
+import socket
+
+
+broker_address="192.168.0.246" 
+
 
 async def startWakewordService():
     # The client object is used to interact with your Azure IoT Edge device.
@@ -70,8 +78,9 @@ async def startWakewordService():
                         msg.custom_properties["event_time"] = str(datetime.now())
                         msg.user_id="sensoredge" ;
                         await module_client.send_message_to_output(msg, "output1")
-                        print("Message successfully sent!")
-
+                        print("Message successfully sent via standard routes")
+                        print("now sending device to device message via mqtt routes")
+                        publish.single(str(socket.gethostname()), "Someone called " + wakeword + " via MQTT", hostname=broker_address,port=1884) # this is the MQTT breakout
 
     except KeyboardInterrupt:
         print("Process interupted by keyboard interaction")

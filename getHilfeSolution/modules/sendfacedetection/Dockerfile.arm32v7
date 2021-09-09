@@ -1,0 +1,13 @@
+FROM svcsolutionscontainerregistry.azurecr.io/virtenv:v4
+
+COPY requirements.txt ./
+RUN apt-get update \
+&& apt-get install gcc \
+&& . /virtenv/bin/activate \
+&& python3.7 -m pip install -r requirements.txt
+
+COPY . .
+
+ADD start.sh /
+RUN chmod +x /start.sh
+CMD ["./start.sh"]

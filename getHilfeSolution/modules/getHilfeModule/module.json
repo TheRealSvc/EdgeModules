@@ -1,10 +1,10 @@
 {
-  "$schema-version": "0.0.70",
+  "$schema-version": "0.0.72",
   "description": "puuh",
   "image": {
     "repository": "svcsolutionscontainerregistry.azurecr.io/gethilfemodule",
     "tag": {
-      "version": "0.0.70",
+      "version": "0.0.72",
       "platforms": {
         "amd64": "./Dockerfile.amd64",
         "amd64.debug": "./Dockerfile.amd64.debug",
